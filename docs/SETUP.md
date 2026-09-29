@@ -61,7 +61,7 @@ GitHub Actions（毎週土曜 7:45 起動）
 上の表の3つを登録します。
 
 （使うモデルを変えたい場合は、同じ画面の「Variables」タブに `NEWSLETTER_MODEL` を作り、
-モデル名を入れます。未設定なら `claude-sonnet-5` を使います）
+モデル名を入れます。未設定なら `claude-sonnet-5-5` を使います）
 
 ## 手順5　試してみる
 

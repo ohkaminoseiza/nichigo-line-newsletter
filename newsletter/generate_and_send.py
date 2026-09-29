@@ -9,7 +9,7 @@ GitHub Actions から毎週1回実行される想定。手元で試すときは:
     ANTHROPIC_API_KEY          Anthropic API キー（必須）
     LINE_CHANNEL_ACCESS_TOKEN  LINE チャネルアクセストークン（長期）（送信時に必須）
     LINE_GROUP_ID              送信先のグループID（C で始まる文字列）（送信時に必須）
-    NEWSLETTER_MODEL           使用モデル（省略時 claude-sonnet-5）
+    NEWSLETTER_MODEL           使用モデル（省略時 claude-sonnet-5-5）
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ ARCHIVE_DIR = ROOT / "archive"
 
 JST = dt.timezone(dt.timedelta(hours=9))
 TITLE_PREFIX = "【北海道日豪協会だより】"
-DEFAULT_MODEL = "claude-sonnet-5"
+DEFAULT_MODEL = "claude-sonnet-5-5"
 MAX_SEARCHES = 8
 
 LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push"
