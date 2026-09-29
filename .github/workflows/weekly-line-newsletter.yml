@@ -1,0 +1,71 @@
+name: 北海道日豪協会だより（LINE週刊配信）
+
+on:
+  schedule:
+    # 毎週土曜 7:45（日本時間）= 金曜 22:45（UTC）。
+    # GitHub の定時実行は数分〜十数分遅れることがあり、原稿作成にも数分かかるため、
+    # 8時ごろに届くよう少し早めに起動しています。
+    - cron: "45 22 * * 5"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "実行モード"
+        type: choice
+        options:
+          - preview（原稿だけ作成・送信しない）
+          - send（LINEへ送信して記録する）
+        default: preview（原稿だけ作成・送信しない）
+      week:
+        description: "週の指定（auto は記録どおり次の週）"
+        type: choice
+        options: [auto, "1", "2", "3", "4"]
+        default: auto
+
+permissions:
+  contents: write
+
+concurrency:
+  group: line-newsletter
+  cancel-in-progress: false
+
+jobs:
+  newsletter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ライブラリのインストール
+        run: pip install -r newsletter/requirements.txt
+
+      - name: 原稿の作成とLINE送信
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_GROUP_ID: ${{ secrets.LINE_GROUP_ID }}
+          NEWSLETTER_MODEL: ${{ vars.NEWSLETTER_MODEL }}
+          MODE: ${{ github.event.inputs.mode }}
+          WEEK: ${{ github.event.inputs.week }}
+        run: |
+          ARGS=""
+          if [[ "$MODE" == preview* ]]; then ARGS="$ARGS --dry-run"; fi
+          if [[ -n "$WEEK" && "$WEEK" != "auto" ]]; then ARGS="$ARGS --week $WEEK"; fi
+          python newsletter/generate_and_send.py $ARGS
+
+      - name: 配信記録を保存
+        if: ${{ !startsWith(github.event.inputs.mode, 'preview') }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add newsletter/state.json archive/
+          if git diff --cached --quiet; then
+            echo "記録の変更はありません"
+            exit 0
+          fi
+          git commit -m "配信記録: $(TZ=Asia/Tokyo date +%Y-%m-%d)"
+          git pull --rebase
+          git push
